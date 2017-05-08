@@ -253,7 +253,7 @@ while true % repeated until no more trials are needed
         
     % % Timing record    
     realAOI = effectOn_vbl - respTime;
-    data.times{b}(end+1, :) = [...
+    data.trialTimes{b}(end+1, :) = [...
         start_vbl,...               % 1
         fixDur,...                  % 2
         stimOn_vbl,...              % 3

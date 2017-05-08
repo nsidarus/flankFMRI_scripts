@@ -119,7 +119,7 @@ subjPath   = [savePath filesep sprintf('S%02d', data.subj)];
 if ~exist(subjPath, 'dir')
     mkdir(subjPath);
 end
-
+clear savePath
 
     
 %% Initialise variables
@@ -236,7 +236,7 @@ switch data.stage
     otherwise
         error('No identifiable stage.');
 end
-
+clear effectsExp effectsTrain
 
 % Set up block matrices
 [blocks, randColours] = flankFMRI_Rand_TrialColourBlock(nBlocks, nColours, nEffects, nRepeat, nCond, nAction, nAOI);
@@ -264,19 +264,19 @@ end
 data.block      = blocks;
 data.colourMaps = randColours; % 1 col per block
 data.raw        = cell(1, nBlocks);
-data.times      = cell(1, nBlocks);
+data.trialTimes      = cell(1, nBlocks);
 data.allTimes   = {'time', 'label'};
 data.triggerTimes = nan(1, nBlocks); % MRI trigger times at the start of each block
 
 % for record
 data.rawHdr     = {'subj', 'cond', 'noise', 'flank', 'target', 'cong', 'aei', 'trialtype', 'effect',...
                     'thisAction', 'actKey', 'rt', 'rt2', 'rating', 'ratingKey', 'ratingRT', 'correct'};
-data.timesHdr   = {'start', 'fixDur', 'stimOn', 'respTime', 'effectOn', 'effectOff',...
+data.trialTimesHdr   = {'start', 'fixDur', 'stimOn', 'respTime', 'effectOn', 'effectOff',...
                     'realAOI', 'wait4Scale', 'scaleOn_vbl', 'scaleOff_vbl', 'ratingTime', 'ratingRT'};
 
 
 
-clear blocks nColours nEffects nRepeat nCond nAction nAOI
+clear blocks randColours nColours nEffects nRepeat nCond nAction nAOI
 
     
 % Columns in block array (not in data.raw)
@@ -413,8 +413,8 @@ for b = 1:size(data.block, 2)
         KbQueueCreate(keys.kbDevice, keyList);
         ListenChar(-1); % Prevent spilling of keystrokes into console:
 
-        [keys.STOP, ~, expTrigger] = wait4Key(keys.EXPtrigger, keys.STOP, keys.kbDevice);
-        data.allTimes(end+1,:) = {expTrigger, 'EXPtrigger'};
+        [keys.STOP, ~, expTriggerTime] = wait4Key(keys.EXPtrigger, keys.STOP, keys.kbDevice);
+        data.allTimes(end+1,:) = {expTriggerTime, 'EXPtrigger'};
         
         
         if ~keys.STOP     
@@ -465,7 +465,9 @@ for b = 1:size(data.block, 2)
             flankFMRI_blockfun(b, getRatings);        
 
 
-            save([subjPath filesep data.name], 'data', 'param');                        
+            save([subjPath filesep data.name], 'data', 'param', 'keys');
+            fprintf('\n ****************** DATA SAVED!! ****************** \n') 
+
 
             if ~keys.STOP % if stop keys has not been pressed    
 
@@ -506,7 +508,7 @@ end % for b=1:nBlocks
 
 
 % % % % End of Experiment
-save([subjPath filesep data.name], 'data', 'param');
+save([subjPath filesep data.name], 'data', 'param', 'keys');
 fprintf('\n ****************** DATA SAVED!! ****************** \n')
 
 
@@ -519,7 +521,7 @@ sca;            % Close PTB screen
 catch err
     
 if isfield(data, 'name')
-    save([subjPath filesep data.name], 'data', 'param');
+    save([subjPath filesep data.name], 'data', 'param', 'keys');
     fprintf('\n ****************** DATA SAVED!! ****************** \n')
 else
     fprintf('\n ****************** DATA NOT SAVED, as no data.name field!! ****************** \n')
