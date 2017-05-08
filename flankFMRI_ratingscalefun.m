@@ -77,7 +77,7 @@ else % no rating
         Screen('TextSize', param.win, param.textSize);
         Screen('TextStyle', param.win, 1);
         DrawFormattedText(param.win, message1, 'center', param.xy0(2)-30, param.colour.stim);
-        Screen('TextSize', param.win, round(param.textSize*.76));
+        Screen('TextSize', param.win, round(param.textSize*.8));
         Screen('TextStyle', param.win, 1);
         DrawFormattedText(param.win, message2, 'center', param.xy0(2)+30, param.colour.stim);
 

@@ -5,7 +5,7 @@ function flankFMRI_blockfun(b, getRatings)
 % input: block n.
 % no output, just runs a block of trials
 
-% NS, Nov 2015
+% NS, May 2017
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -17,7 +17,6 @@ global param keys colno data
 if ~keys.STOP
     
 trialIndex = 1:size(data.block{b},1); % no need to randomise, but might need to repeat trials 
-% errorCount = 0;
 
 t=0;
 while true % repeated until no more trials are needed
@@ -185,7 +184,6 @@ while true % repeated until no more trials are needed
 
         
     else % if error
-%         errorCount = errorCount + 1;
                 
         t_now = GetSecs;        
 
@@ -221,12 +219,6 @@ while true % repeated until no more trials are needed
         scaleOn_vbl = 0;
         scaleOff_vbl= 0;
         
-
-        % No error replacement
-%         if errorCount <= param.maxErrorN
-%             % To replace an error trial at the end of the block, add current index to list of trial indexes
-%             trialIndex = [trialIndex, trialIndex(i)];       
-%         end
     end % if correct
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
@@ -236,39 +228,46 @@ while true % repeated until no more trials are needed
 %% % % % Record all trial info and responses
 
     data.raw{b}(end+1, :) = [...
-        data.subj,...% col 1
+        data.subj,...           % col 1
+        b,...                   % col 2
+        t,...                   % col 3
         data.block{b}(trialIndex(t),colno.cond:colno.effect),... % cond, noise, flank, target, cong, aei, trialtype, effect
-        thisAction,...          % col 10
-        actKey,...              % col 11
-        rt,...                  % col 12
+        thisAction,...          % col 13
+        actKey,...              % col 14
+        rt,...                  % col 15
         rt2,...
-        rating,...              % col 13
-        ratingKey,...           % col 14
-        ratingRT,...            % col 15
-        correct];               % col 16
+        rating,...              % col 16
+        ratingKey,...           % col 17
+        ratingRT,...            % col 18
+        correct];               % col 19
     
-%     data.rawHdr = {'subj', 'cond', 'noise', 'flank', 'target', 'cong', 'aei', 'trialtype', 'effect',...
-%         'thisAction', 'actKey', 'rt', 'rating', 'ratingKey', 'ratingRT', 'correct'};
+    % data.rawHdr     = {'subj', 'blockN', 'trialN', 'cond', 'noise', 'flank', 'target', 'cong', 'aei', 'trialtype', 'effect',...
+    %                     'thisAction', 'actKey', 'rt', 'rt2', 'rating', 'ratingKey', 'ratingRT', 'correct'};
     
         
     % % Timing record    
     realAOI = effectOn_vbl - respTime;
+    
     data.trialTimes{b}(end+1, :) = [...
-        start_vbl,...               % 1
-        fixDur,...                  % 2
-        stimOn_vbl,...              % 3
-        respTime,...                % 4
-        effectOn_vbl,...            % 5        
-        effectOff_vbl,...           % 6
-        realAOI,...                 % 7
-        wait4Scale,...              % 8
-        scaleOn_vbl,...             % 9
-        scaleOff_vbl,...            % 10
-        ratingTime,...              % 11
-        ratingRT];                  % 12
+        data.subj,...               % 1
+        b,...                       % 2
+        t,...                       % 3
+        data.triggerTimes(b),...    % 4
+        start_vbl,...               % 5
+        fixDur,...                  % 6
+        stimOn_vbl,...              % 7
+        respTime,...                % 8
+        effectOn_vbl,...            % 9        
+        effectOff_vbl,...           % 10
+        realAOI,...                 % 11
+        wait4Scale,...              % 12
+        scaleOn_vbl,...             % 13
+        scaleOff_vbl,...            % 14
+        ratingTime,...              % 15
+        ratingRT];                  % 16
 
-%     data.timesHdr = {'start', 'fixDur', 'stimOn', 'respTime', 'effectOn', 'effectOff',...
-%         'realAOI', 'wait4Scale', 'scaleOn_vbl', 'scaleOff_vbl', 'ratingTime', 'ratingRT'};
+    % data.timesHdr = {'subj', 'blockN', 'trialN', 'T0', 'start', 'fixDur', 'stimOn', 'respTime', 'effectOn', 'effectOff',...
+    %     'realAOI', 'wait4Scale', 'scaleOn_vbl', 'scaleOff_vbl', 'ratingTime', 'ratingRT'};
     
 
     %% end of trial

@@ -264,16 +264,15 @@ end
 data.block      = blocks;
 data.colourMaps = randColours; % 1 col per block
 data.raw        = cell(1, nBlocks);
-data.trialTimes      = cell(1, nBlocks);
+data.trialTimes = cell(1, nBlocks);
 data.allTimes   = {'time', 'label'};
 data.triggerTimes = nan(1, nBlocks); % MRI trigger times at the start of each block
 
 % for record
-data.rawHdr     = {'subj', 'cond', 'noise', 'flank', 'target', 'cong', 'aei', 'trialtype', 'effect',...
+data.rawHdr     = {'subj', 'blockN', 'trialN', 'cond', 'noise', 'flank', 'target', 'cong', 'aei', 'trialtype', 'effect',...
                     'thisAction', 'actKey', 'rt', 'rt2', 'rating', 'ratingKey', 'ratingRT', 'correct'};
-data.trialTimesHdr   = {'start', 'fixDur', 'stimOn', 'respTime', 'effectOn', 'effectOff',...
-                    'realAOI', 'wait4Scale', 'scaleOn_vbl', 'scaleOff_vbl', 'ratingTime', 'ratingRT'};
-
+data.trialTimesHdr = {'subj', 'blockN', 'trialN', 'T0', 'start', 'fixDur', 'stimOn', 'respTime', 'effectOn', 'effectOff',...
+                       'realAOI', 'wait4Scale', 'scaleOn_vbl', 'scaleOff_vbl', 'ratingTime', 'ratingRT'};
 
 
 clear blocks randColours nColours nEffects nRepeat nCond nAction nAOI
