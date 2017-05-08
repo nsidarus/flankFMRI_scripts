@@ -127,11 +127,13 @@ end
 param.screenWidth       = 40;           % in cm
 
 if data.fMRI
-    param.viewDistance  = 120;          % in cm
-    param.textSize      = 34;           % in points
+    param.viewDistance  = 120;           % in cm
+    param.scaleFontSz   = 40;            % logical, y or n
+    param.normalFontSz  = 36;
 else
-    param.viewDistance  = 60;           % in cm    
-    param.textSize      = 28;           % in points
+    param.viewDistance  = 60;           % in cm
+    param.scaleFontSz   = 30;            % logical, y or n
+    param.normalFontSz  = 25;            % logical, y or n
 end
 
 
@@ -311,10 +313,7 @@ if ~scriptTest % real exp
     checkHz = 1; % check that screen refresh rate matches desired one, when in experiment mode
         
 else
-    % PTB opening screen will be empty = black screen
-    Screen('Preference', 'VisualDebugLevel', 1);
-
-%     Screen('Preference', 'SkipSyncTests', 1);
+    Screen('Preference', 'SkipSyncTests', 1);
        
 %     screenNumber=0;  % can specify number, otherwise, default
 %     screenNumber=max(Screen('Screens'));
@@ -335,12 +334,20 @@ param.slack = param.rft/3;
 
 
 % If not testing script
-if exist('checkHz', 'var') && checkHz == 1 && param.Hz ~= param.aimHz
-    Priority(0);  %Reset priority 
-    KbQueueRelease(keys.kbDevice); 
-    ListenChar(0);
-    Screen('CloseAll'); % Close PTB screen  
-    error('CHECK REFRESH RATE');
+if exist('checkHz', 'var') && checkHz == 1
+    if param.Hz ~= param.aimHz
+        fprintf('\n\n ************************************ \n------------ CHECK REFRESH RATE!! ------------\n');
+        Priority(0);  %Reset priority 
+        KbQueueRelease(keys.kbDevice); 
+        ListenChar(0);
+        Screen('CloseAll'); % Close PTB screen  
+        error('CHECK REFRESH RATE');
+    end        
+else
+    if param.Hz == 0 % Couldn't compute a proper one, so use aimHz
+        param.HzFlag = 'ProblemsCorrected';
+        param.Hz = param.aimHz;
+    end
 end
 
 
@@ -397,7 +404,7 @@ for b = 1:size(data.block, 2)
         
         % Show message to signal start of run
         message1 = 'Veuillez attendre.';
-        Screen('TextSize', param.win, param.textSize);
+        Screen('TextSize', param.win, param.normalFontSz);
         DrawFormattedText(param.win, message1, 'center', 'center', param.colour.text);
         block_vbl = Screen('Flip', param.win);                                        
         data.allTimes(end+1,:) = {block_vbl, sprintf('block%d_waitMessage', b)};
@@ -428,17 +435,25 @@ for b = 1:size(data.block, 2)
                 
                 fprintf('Waiting for fMRI trigger (or the "t" key). \n')
                 
+                % Tell participants to wait - or delete to stick to black screen
+    %             DrawFormattedText(param.win, 'Please wait.', 'center', 'center', param.colour.stim, [], [], [], 1.5);
+    %             Screen('Flip', param.win); % clear screen
+
                 data.triggerTimes(b) = KbTriggerWait( keys.MRItrigger );
                 data.allTimes(end+1,:) = {data.triggerTimes(b), 'MRItrigger'};
 
-                % or, if that doesn't work, could do (basically what the other function does):
+                % or, if that doesn't work, could do:
             %     keyList                 = zeros(1,256);
             %     keyList(keys.MRItrigger) = 1; % only read MRI events
             %     KbQueueCreate(keys.kbDevice, keyList);
             %     data.runStartTimes(r) = KbQueueWait(keys.kbDevice);                
             end
 
-            % Re-Start normal keyboard recording capacity - Can't use Queues before the
+%             if b == 1 % just for an extra record of time
+%                 data.expStartTime = GetSecs();
+%             end
+
+            % Start normal keyboard recording capacity - Can't use Queues before the
             % KbTriggerWait command! or need to use KbQueueRelease first
             keyList                 = zeros(1,256);
             keyList(keysofinterest) = 1;
@@ -471,9 +486,9 @@ for b = 1:size(data.block, 2)
 
                 if b == nBlocks  % If last block
 
-                    message1 = 'Fin de l''expérience \n\n\n Veuillez attendre l''expérimentateur.';
+                    message1 = 'Fin de l''experience \n\n\n Veuillez attendre l''experimentateur.';
 
-                    Screen('TextSize', param.win, param.textSize);
+                    Screen('TextSize', param.win, param.normalFontSz);
                     DrawFormattedText(param.win, message1, 'center', 'center', param.colour.text);
                     Screen('DrawingFinished', param.win);
                     vbl = Screen('Flip', param.win);

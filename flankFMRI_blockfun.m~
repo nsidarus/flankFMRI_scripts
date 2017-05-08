@@ -23,6 +23,7 @@ t=0;
 while true % repeated until no more trials are needed
     t=t+1;
     
+    
     firstPressed = [];
 
     rt2 = 0;
@@ -46,7 +47,7 @@ while true % repeated until no more trials are needed
         
 %% % % % % Start Trial
     
-    fprintf('\nBlock %d, Trial %d \n', b, t);
+    fprintf('\nTrial %d \n', t);
 
     % Jittered fixation Duration/ITI
     fixDur = param.fixationDur(1) + (param.fixationDur(2)-param.fixationDur(1))*rand(1);
@@ -154,8 +155,6 @@ while true % repeated until no more trials are needed
     wait4Scale = param.effect2scaleInt(1) + (param.effect2scaleInt(2)-param.effect2scaleInt(1))*rand(1);     
 
     if correct
-        fprintf('Correct response.\n');
-        
         %% Present Effect
         Screen('FillOval', param.win, param.colour.effects(thisEffect, :), param.stim.circleBox, param.stim.circleDiam);
         Screen('DrawingFinished', param.win);
@@ -189,7 +188,7 @@ while true % repeated until no more trials are needed
                 
         t_now = GetSecs;        
 
-        fprintf('Response error.\n');
+        fprintf('Errord \n', t);
         
         Screen('DrawLines', param.win, param.stim.errorCross, 5, param.colour.stim);
         Screen('DrawingFinished', param.win);
@@ -204,13 +203,13 @@ while true % repeated until no more trials are needed
         % wait extra jittered interval
         WaitSecs(wait4Scale);
         
-        if ~exist('rt', 'var')
+        if isempty(rt)
             rt = 0;
         end       
-        if ~exist('thisAction', 'var')
+        if isempty(thisAction)
             thisAction = 0;
         end              
-        if ~exist('respTime', 'var') % For PTB diagnostics matrix
+        if isempty(respTime) % For PTB diagnostics matrix
             respTime = 0;
         end    
         
