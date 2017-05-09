@@ -14,8 +14,8 @@ if ~exist('wait4Scale','var')
     wait4Scale = 0;
 end
 
-noRatOn_vbl = 0;
-noRatOff_vbl = 0;
+noRatOn_vbl  = NaN;
+noRatOff_vbl = NaN;
 
 %% Scale
 message1 = 'Votre sentiment de contrôle ?';
@@ -45,14 +45,15 @@ if ~keys.STOP &&...
     ratingRT = (ratingTime - scaleOn_vbl) * 1000;
     data.allTimes(end+1,:) = {ratingTime, sprintf('ratingTime_key%d',ratingKey)};
 else
-    ratingKey= 0;
-    rating   = 0;
-    ratingRT = 0;
+    ratingKey   = NaN;
+    rating      = NaN;
+    ratingTime  = NaN;
+    ratingRT    = NaN;
 end
 
 
 % wait rest of rating window ?
-if rating ~= 0
+if ismember(rating, 1:length(keys.rating))
     fprintf('Valid rating.\n');
     
     % Clear screen to fixation

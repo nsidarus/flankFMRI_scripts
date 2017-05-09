@@ -23,8 +23,8 @@ while true % repeated until no more trials are needed
     t=t+1;
     
     firstPressed = [];
-
-    rt2 = 0;
+    actKey  = NaN;
+    rt2     = NaN;
     
     % read from block array id of stimuli to find what buffer to call
     thisNoise       = data.block{b}(trialIndex(t), colno.noise);
@@ -68,8 +68,7 @@ while true % repeated until no more trials are needed
     KbQueueFlush(keys.kbDevice);
                 
     correct  = 0;
-    actKey   = 0;
-    
+
     waitResp = 1;
     getResp  = 1;
     vbl = GetSecs; % to have vbl for response loop
@@ -110,7 +109,7 @@ while true % repeated until no more trials are needed
     
 
     %% % Handle responses
-    resp = find(firstPressed~=0); % get key id
+    resp = find(firstPressed); % get key id
 
     if length(resp)==1 && ... % only 1 key was pressed
          ismember(resp, keys.action) % is one of the action response keys
@@ -175,11 +174,11 @@ while true % repeated until no more trials are needed
                 correct = 0; % no rating, so not correct trial
             end
         else            
-            rating      = 0;
-            ratingRT    = 0;
-            ratingTime  = 0;                        
-            scaleOn_vbl = 0;
-            scaleOff_vbl= 0;
+            rating      = NaN;
+            ratingRT    = NaN;
+            ratingTime  = NaN;                        
+            scaleOn_vbl = NaN;
+            scaleOff_vbl= NaN;
         end % if getRatings
 
         
@@ -202,22 +201,18 @@ while true % repeated until no more trials are needed
         % wait extra jittered interval
         WaitSecs(wait4Scale);
         
-        if ~exist('rt', 'var')
-            rt = 0;
-        end       
         if ~exist('thisAction', 'var')
-            thisAction = 0;
+            thisAction = NaN;
+            rt = NaN;
+            respTime = NaN;
         end              
-        if ~exist('respTime', 'var') % For PTB diagnostics matrix
-            respTime = 0;
-        end    
         
-        rating      = 0;
-        ratingKey   = 0;
-        ratingRT    = 0;        
-        ratingTime  = 0;                        
-        scaleOn_vbl = 0;
-        scaleOff_vbl= 0;
+        rating      = NaN;
+        ratingKey   = NaN;
+        ratingRT    = NaN;        
+        ratingTime  = NaN;                        
+        scaleOn_vbl = NaN;
+        scaleOff_vbl= NaN;
         
     end % if correct
 
@@ -275,21 +270,17 @@ while true % repeated until no more trials are needed
     if ~keys.STOP
         
         % Read any ongoing cue for whether to pause or stop
-        [pressed, firstPressed]= KbQueueCheck(keys.kbDevice);
-        if pressed
-            if ismember(keys.pause, find(firstPressed~=0)) % PAUSE SCRIPT Until space bar is pressed
-                pauseFun
-            elseif ismember(keys.escape, find(firstPressed~=0))
-                keys.STOP = 1;
-                return
-            end
-        end        
+        keys.STOP = checkKeys(keys.STOP, keys.kbDevice);  
         
-        % otherwise, continue - ITI set at trial start
-        if  t >= length(trialIndex) % if last trial, end block
-            break                  
-        end
-                    
+        if ~keys.STOP % otherwise, continue - ITI set at trial start
+            if  t >= length(trialIndex) % if last trial, end block
+                break                  
+            end
+            
+        elseif keys.STOP
+            return
+        end % if ~keys.STOP
+
     elseif keys.STOP
         return
     end % if ~keys.STOP

@@ -94,7 +94,7 @@ if ~scriptTest
         error('Experiment Cancelled!');
     end
 
-    data.subj  = str2num(argindlg{1});
+    data.subj  = str2double(argindlg{1});
     data.stage = argindlg{2};
     if argindlg{3} == 'y'
         data.fMRI = 1;
@@ -272,7 +272,7 @@ data.triggerTimes = nan(1, nBlocks); % MRI trigger times at the start of each bl
 data.rawHdr     = {'subj', 'blockN', 'trialN', 'cond', 'noise', 'flank', 'target', 'cong', 'aei', 'trialtype', 'effect',...
                     'thisAction', 'actKey', 'rt', 'rt2', 'rating', 'ratingKey', 'ratingRT', 'correct'};
 data.trialTimesHdr = {'subj', 'blockN', 'trialN', 'T0', 'start', 'fixDur', 'stimOn', 'respTime', 'effectOn', 'effectOff',...
-                       'realAOI', 'wait4Scale', 'scaleOn_vbl', 'scaleOff_vbl', 'ratingTime', 'ratingRT'};
+                       'realAOI', 'wait4Scale', 'scaleOn', 'scaleOff', 'ratingTime', 'ratingRT'};
 
 
 clear blocks randColours nColours nEffects nRepeat nCond nAction nAOI
