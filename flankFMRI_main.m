@@ -70,7 +70,7 @@ end
 
 
 % % % % % % % % % To run on test mode
-scriptTest = 2; % scriptTest=0: exp  %% scriptTest=1: In fMRI  %% scriptTest=2: Not in fMRI 
+scriptTest = 0; % scriptTest=0: exp  %% scriptTest=1: In fMRI  %% scriptTest=2: Not in fMRI 
 testStage = 'exp'; % if scriptTest, then choose stage: train, train2, exp
 
 getRatings = 1; % Get Online Ratings for all subjects
@@ -131,7 +131,7 @@ if data.fMRI
     param.textSize      = 34;           % in points
 else
     param.viewDistance  = 60;           % in cm    
-    param.textSize      = 28;           % in points
+    param.textSize      = 24;           % in points
 end
 
 
@@ -337,7 +337,7 @@ param.slack = param.rft/3;
 if exist('checkHz', 'var') && checkHz == 1 && param.Hz ~= param.aimHz
     Priority(0);  %Reset priority 
     KbQueueRelease(keys.kbDevice); 
-    ListenChar(0);
+%     ListenChar(0);
     Screen('CloseAll'); % Close PTB screen  
     error('CHECK REFRESH RATE');
 end
@@ -410,7 +410,7 @@ for b = 1:size(data.block, 2)
         keyList                 = zeros(1,256);
         keyList(keysofinterest) = 1;
         KbQueueCreate(keys.kbDevice, keyList);
-        ListenChar(-1); % Prevent spilling of keystrokes into console:
+%         ListenChar(-1); % Prevent spilling of keystrokes into console:
 
         [keys.STOP, ~, expTriggerTime] = wait4Key(keys.EXPtrigger, keys.STOP, keys.kbDevice);
         data.allTimes(end+1,:) = {expTriggerTime, 'EXPtrigger'};
@@ -419,7 +419,7 @@ for b = 1:size(data.block, 2)
         if ~keys.STOP     
             % Release Queues for possible MRI 
             KbQueueRelease(keys.kbDevice)
-            ListenChar(0); 
+%             ListenChar(0); 
 
             %% Wait exclusively for fMRI triggers
 
@@ -442,7 +442,7 @@ for b = 1:size(data.block, 2)
             keyList                 = zeros(1,256);
             keyList(keysofinterest) = 1;
             KbQueueCreate(keys.kbDevice, keyList);
-            ListenChar(-1); % Prevent spilling of keystrokes into console:
+%             ListenChar(-1); % Prevent spilling of keystrokes into console:
 
 %             % Prepare participants for start of run
 %             DrawFormattedText(param.win, 'Get ready...', 'center', 'center', param.colour.stim, [], [], [], 1.5);
@@ -501,7 +501,7 @@ for b = 1:size(data.block, 2)
     end % ~keys.STOP
         
     KbQueueRelease(keys.kbDevice); % end kb queues
-    ListenChar(0); % Restore keystrokes
+%     ListenChar(0); % Restore keystrokes
     
 end % for b=1:nBlocks
 
@@ -512,7 +512,7 @@ fprintf('\n ****************** DATA SAVED!! ****************** \n')
 
 
 KbQueueRelease(keys.kbDevice); 
-ListenChar(0);
+% ListenChar(0);
 Priority(0);    % Reset priority 
 sca;            % Close PTB screen  
 
@@ -528,7 +528,7 @@ end
 
 
 KbQueueRelease(keys.kbDevice); 
-ListenChar(0);
+% ListenChar(0);
 Priority(0);    % Reset priority 
 sca;            % Close PTB screen  
     
