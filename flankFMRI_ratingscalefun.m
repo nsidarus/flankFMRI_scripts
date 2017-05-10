@@ -1,16 +1,12 @@
-function [STOP, rating, ratingKey, ratingRT, ratingTime, scaleOn_vbl, scaleOff_vbl, noRatOn_vbl, noRatOff_vbl] = flankFMRI_ratingscalefun(param, respKeys, STOP, kbDevice, effectOff_vbl, wait4Scale)
+function [rating, ratingKey, ratingRT, ratingTime, scaleOn_vbl, scaleOff_vbl] = flankFMRI_ratingscalefun(effectOff_vbl, wait4Scale)
 % Presents Rating Scale and collects ratings
 
 % NS, May 2017
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if ~exist('STOP','var')
-    STOP = 0;
-end
-if ~exist('kbDevice','var')
-    kbDevice = [];
-end
+global param data keys
+
 if ~exist('effectOff_vbl','var')
     effectOff_vbl = 0;    
 end
@@ -18,83 +14,93 @@ if ~exist('wait4Scale','var')
     wait4Scale = 0;
 end
 
-
-
-waitRatWin = 0;
-noRatFeedback = 1;
-noRatFeedbackDur = 1; % s
-noRatOn_vbl = 0;
-noRatOff_vbl = 0;
+noRatOn_vbl  = NaN;
+noRatOff_vbl = NaN;
 
 %% Scale
 message1 = 'Votre sentiment de contrôle ?';
-message2 = 'Pas de contrôle                                    Contrôle total';
+message2 = 'Pas de contrôle                                          Contrôle total';
 message3 = '     1      2      3      4      5      6      7      8    ';
-Screen('TextSize', param.win, 40);
+Screen('TextSize', param.win, round(param.textSize*1.17));
 Screen('TextStyle', param.win, 1);
 DrawFormattedText(param.win, message1, 'center', param.xy0(2)-100, param.colour.stim, [],[],[], 1.5); % 1.5 - vertical spacing
-Screen('TextSize', param.win, 26);
+Screen('TextSize', param.win, round(param.textSize*.76));
 Screen('TextStyle', param.win, 2);
 DrawFormattedText(param.win, message2, 'center', param.xy0(2)-6, param.colour.stim);
-Screen('TextSize', param.win, 34);
+Screen('TextSize', param.win, param.textSize);
 Screen('TextStyle', param.win, 1);
 DrawFormattedText(param.win, message3, 'center', param.xy0(2)+40, param.colour.stim);
 Screen('DrawingFinished', param.win);
 
-scaleOn_vbl = Screen('Flip', param.win, effectOff_vbl + wait4Scale - param.slack); % draw scale after random interval
+scaleOn_vbl = Screen('Flip', param.win, effectOff_vbl + wait4Scale - param.slack); % draw scale after random interval          
+data.allTimes(end+1,:) = {scaleOn_vbl, 'ratingScaleOn'};
+fprintf('Rating scale window. \n')
             
-[STOP, ratingKey, ratingTime] = wait4Key(respKeys, STOP, kbDevice, param.ratingWindow);
+[keys.STOP, ratingKey, ratingTime] = wait4Key(keys.rating, keys.STOP, keys.kbDevice, param.ratingWindow-param.rft); % correct ratingWindow by 1 refresh
 
-if ~STOP && ratingKey > 0
+if ~keys.STOP &&...
+        length(ratingKey)==1 && ratingKey > 0
     
-    rating = find(ismember(respKeys, ratingKey)); % convert to likert scale
+    rating = find(ismember(keys.rating, ratingKey)); % convert to likert scale
     ratingRT = (ratingTime - scaleOn_vbl) * 1000;
+    data.allTimes(end+1,:) = {ratingTime, sprintf('ratingTime_key%d',ratingKey)};
 else
-    rating = 0;
-    ratingRT = 0;
+    ratingKey   = NaN;
+    rating      = NaN;
+    ratingTime  = NaN;
+    ratingRT    = NaN;
 end
 
 
 % wait rest of rating window ?
-if rating ~= 0
+if ismember(rating, 1:length(keys.rating))
+    fprintf('Valid rating.\n');
     
     % Clear screen to fixation
     Screen('FillRect', param.win, [param.colour.stim 1], param.stim.fixRect);
     scaleOff_vbl = Screen('Flip', param.win); % blank the screen 
+    data.allTimes(end+1,:) = {scaleOff_vbl, 'fixation'};
     
-    if waitRatWin
-        while GetSecs < scaleOn_vbl + param.ratingWindow - param.slack
+    if param.waitRatWin
+        fprintf('Waiting for rest of rating scale window. \n')
+        while GetSecs < scaleOn_vbl + param.ratingWindow - param.rft
             Screen('FillRect', param.win, [param.colour.stim 1], param.stim.fixRect);
             Screen('Flip', param.win); % blank the screen 
         end
     end
     
 else % no rating
-    if noRatFeedback
+    if param.noRatFeedback
+        fprintf('No rating error.\n');
+        
         message1 = 'Attention!';
-        message2 = 'Vous n''avez pas repondu !';
-        Screen('TextSize', param.win, 30);
+        message2 = 'Vous n''avez pas répondu !';
+        Screen('TextSize', param.win, round(param.textSize*1.17));
         Screen('TextStyle', param.win, 1);
-        DrawFormattedText(param.win, message1, 'center', param.xy0(2)-30, param.colour.stim, [],[],[], 1.5); % 1.5 - vertical spacing
-        Screen('TextSize', param.win, 26);
+        DrawFormattedText(param.win, message1, 'center', param.xy0(2)-30, param.colour.stim);
+        Screen('TextSize', param.win, round(param.textSize));
         Screen('TextStyle', param.win, 1);
-        DrawFormattedText(param.win, message2, 'center', param.xy0(2)+30, param.colour.stim, [],[],[], 1.5); % 1.5 - vertical spacing
-
-        noRatOn_vbl = Screen('Flip', param.win); % draw scale after random interval
-        scaleOff_vbl = noRatOn_vbl;
+        DrawFormattedText(param.win, message2, 'center', param.xy0(2)+30, param.colour.stim);
+        Screen('DrawingFinished', param.win);
+        
+        noRatOn_vbl = Screen('Flip', param.win); % draw scale after random interval        
+        scaleOff_vbl = noRatOn_vbl; % for trial-wise time record
+        data.allTimes(end+1,:) = {noRatOn_vbl, 'noRatingFeedback'};
+        
         
         % Clear screen to fixation
         Screen('FillRect', param.win, [param.colour.stim 1], param.stim.fixRect);
-        noRatOff_vbl = Screen('Flip', param.win, noRatOn_vbl + noRatFeedbackDur - param.slack); % draw scale after random interval
+        noRatOff_vbl = Screen('Flip', param.win, noRatOn_vbl + param.noRatFeedbackDur - param.slack); % draw scale after random interval
+        data.allTimes(end+1,:) = {noRatOff_vbl, 'fixation'};
         
     else
         % Clear screen to fixation
         Screen('FillRect', param.win, [param.colour.stim 1], param.stim.fixRect);
         scaleOff_vbl = Screen('Flip', param.win); % blank the screen 
+        data.allTimes(end+1,:) = {scaleOff_vbl, 'fixation'};
     end    
 end
 
-    
     
     
     

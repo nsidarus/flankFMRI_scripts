@@ -68,35 +68,50 @@ if ~exist(savePath, 'dir')
     mkdir(savePath);
 end
 
-%%% Add extra scripts folder to path
-oldpath = addpath('./funs'); % with oldpath restore path def. file at the end
-
 
 % % % % % % % % % To run on test mode
-% scriptTest = 0; % if running exp, comment out! if scriptTest == 1, use small window, % if scriptTest == 2, use big window
+scriptTest = 2; % scriptTest=0: exp  %% scriptTest=1: In fMRI  %% scriptTest=2: Not in fMRI 
+testStage = 'exp'; % if scriptTest, then choose stage: train, train2, exp
 
 getRatings = 1; % Get Online Ratings for all subjects
 
             
-%%  Initialise Global variables
+%%  Initialise session info
 % To make critical data info available to all functions
 
 global param keys colno data
 
 
 % Get Subj & Experiment info
-argindlg = inputdlg({'Participant number (two-digit)',...
-                     'Stage: train, train2, exp)',...
-                     'fMRI: y or n'});
-% argindlg = inputdlg({'Participant number (two-digit)',...
-%                      'Stage (train, train2, exp)',...
-%                      'fMRI (y or n)'}, '', 1, {'','',''}, 'on');
-if isempty(argindlg)
-    error('Experiment Cancelled!');
+if ~scriptTest
+    argindlg = inputdlg({'Participant number (two-digit)',...
+                         'Stage: train, train2, exp)',...
+                         'fMRI: y or n'});
+    % argindlg = inputdlg({'Participant number (two-digit)',...
+    %                      'Stage (train, train2, exp)',...
+    %                      'fMRI (y or n)'}, '', 1, {'','',''}, 'on');
+    if isempty(argindlg)
+        error('Experiment Cancelled!');
+    end
+
+    data.subj  = str2double(argindlg{1});
+    data.stage = argindlg{2};
+    if argindlg{3} == 'y'
+        data.fMRI = 1;
+    else
+        data.fMRI = 0;
+    end
+
+else
+    data.subj  = 99; 
+    data.stage = testStage;
+    if scriptTest == 1
+        data.fMRI = 1;
+    else
+        data.fMRI = 0;
+    end    
 end
 
-data.subj  = str2num(argindlg{1});
-data.stage = argindlg{2};
 data.date  = datestr(now,'yyyymmdd-HHMM');
 data.name  = sprintf('flankFMRI_S%02d_%s_%s.mat', data.subj, data.stage, data.date);
 
@@ -104,18 +119,21 @@ subjPath   = [savePath filesep sprintf('S%02d', data.subj)];
 if ~exist(subjPath, 'dir')
     mkdir(subjPath);
 end
-
-if argindlg{3} == 'y'
-    fMRI = 1;
-else
-    fMRI = 0;
-end
+clear savePath
 
     
-
+%% Initialise variables
 % Screen
 param.screenWidth       = 40;           % in cm
-param.viewDistance      = 120;           % in cm
+
+if data.fMRI
+    param.viewDistance  = 120;          % in cm
+    param.textSize      = 34;           % in points
+else
+    param.viewDistance  = 60;           % in cm    
+    param.textSize      = 28;           % in points
+end
+
 
 % Stim
 param.fixPointSize      = .2;           % in visual degrees
@@ -139,6 +157,11 @@ param.aoiDur            = [.100, .300, .500]; % secs
 param.effectDur         = .300;         % secs
 param.effect2scaleInt   = [2   4];      % secs
 param.ratingWindow      = 1.5;          % secs
+% more on rating scale
+param.waitRatWin        = 1;            % wait rest of window after response? logical, y or n
+param.noRatFeedback     = 1;            % logical, y or n
+param.noRatFeedbackDur  = 1;            % secs
+
 
 
 % If uncertain, or for macs:
@@ -152,7 +175,7 @@ keys.enter              = KbName('Return');
 keys.MRItrigger         = KbName('t');
 keys.EXPtrigger         = KbName('s');
 
-if fMRI % different response keys/codes
+if data.fMRI % different response keys/codes
     keys.action         = KbName({'e', 'b'}); % Left and Right Action Keys
     keys.rating         = KbName({'d', 'n', 'z', 'e', 'b', 'y', 'g', 'r'}); % All response keys, from both left & right resp. boxes
 else
@@ -208,11 +231,12 @@ switch data.stage
         
     case 'exp'
         nBlocks = 6;
-        param.colour.effects = effectsExp./255; % for 0-1 colour mapping  
+        param.colour.effects = effectsExp./255; % for 0-1 colour mapping
+        
     otherwise
         error('No identifiable stage.');
 end
-
+clear effectsExp effectsTrain
 
 % Set up block matrices
 [blocks, randColours] = flankFMRI_Rand_TrialColourBlock(nBlocks, nColours, nEffects, nRepeat, nCond, nAction, nAOI);
@@ -226,7 +250,7 @@ end
 
 
 % if testing script, shorten blocks
-if exist('scriptTest', 'var') && ~strcmp(data.stage, 'train2')
+if scriptTest > 0 && ~strcmp(data.stage, 'train2')
     if nBlocks > 1
         for i = 1:3
             blocks{i} = blocks{i}(1:6,:);
@@ -240,22 +264,21 @@ end
 data.block      = blocks;
 data.colourMaps = randColours; % 1 col per block
 data.raw        = cell(1, nBlocks);
-data.times      = cell(1, nBlocks);
+data.trialTimes = cell(1, nBlocks);
 data.allTimes   = {'time', 'label'};
 data.triggerTimes = nan(1, nBlocks); % MRI trigger times at the start of each block
 
 % for record
-data.rawHdr     = {'subj', 'cond', 'noise', 'flank', 'target', 'cong', 'aei', 'trialtype', 'effect',...
-                    'thisAction', 'rt', 'realAOI', 'rating', 'ratingKey', 'ratingRT'};
-data.timesHdr   = {'start', 'fixDur', 'stimOn', 'respTime', 'effectOn', 'effectOff',...
-                    'realAOI', 'wait4Scale', 'scaleOn_vbl', 'scaleOff_vbl', 'ratingTime', 'ratingRT'};
+data.rawHdr     = {'subj', 'blockN', 'trialN', 'cond', 'noise', 'flank', 'target', 'cong', 'aei', 'trialtype', 'effect',...
+                    'thisAction', 'actKey', 'rt', 'rt2', 'rating', 'ratingKey', 'ratingRT', 'correct'};
+data.trialTimesHdr = {'subj', 'blockN', 'trialN', 'T0', 'start', 'fixDur', 'stimOn', 'respTime', 'effectOn', 'effectOff',...
+                       'realAOI', 'wait4Scale', 'scaleOn', 'scaleOff', 'ratingTime', 'ratingRT'};
 
 
-
-clear blocks nColours nEffects nRepeat nCond nAction nAOI
+clear blocks randColours nColours nEffects nRepeat nCond nAction nAOI
 
     
-% Columns in block array
+% Columns in block array (not in data.raw)
 colno.cond      = 1;
 colno.noise     = 2;
 colno.flank     = 3;
@@ -273,19 +296,8 @@ try
 
 
 
-if exist('scriptTest', 'var') && ismember(scriptTest, 1:2)
-    % Since it's not priming, can do this, if PTB not happy
-    Screen('Preference', 'SkipSyncTests', 1);
-    
-    
-%     screenNumber=0;  % can specify number, otherwise, default
-    screenNumber=max(Screen('Screens'));
-    %     [param.win, param.wrect] = Screen('OpenWindow', screenNumber, param.colour.bkgd);
-    [param.win, param.wrect] = PsychImaging('OpenWindow', screenNumber, param.colour.bkgd);
-    HideCursor;
-    
-else % real exp.
-    % Since it's not priming, can do this, if PTB not happy
+if ~scriptTest % real exp
+    % Since it's not priming, could do this, if PTB not happy
 %     Screen('Preference', 'SkipSyncTests', 1);
 
     % PTB opening screen will be empty = black screen
@@ -295,7 +307,20 @@ else % real exp.
     screenNumber=1;
     [param.win, param.wrect] = PsychImaging('OpenWindow', screenNumber, param.colour.bkgd);
     HideCursor;
-%     checkHz = 1; % check that screen refresh rate matches desired one, when in experiment mode
+    checkHz = 1; % check that screen refresh rate matches desired one, when in experiment mode
+        
+else
+    % PTB opening screen will be empty = black screen
+    Screen('Preference', 'VisualDebugLevel', 1);
+
+%     Screen('Preference', 'SkipSyncTests', 1);
+       
+%     screenNumber=0;  % can specify number, otherwise, default
+%     screenNumber=max(Screen('Screens'));
+    screenNumber=1;
+    %     [param.win, param.wrect] = Screen('OpenWindow', screenNumber, param.colour.bkgd);
+    [param.win, param.wrect] = PsychImaging('OpenWindow', screenNumber, param.colour.bkgd);
+    HideCursor;
 end
      
 
@@ -309,19 +334,12 @@ param.slack = param.rft/3;
 
 
 % If not testing script
-if exist('checkHz', 'var') && checkHz == 1
-    if param.Hz ~= param.aimHz
-        fprintf('\n\n ************************************ \n------------ CHECK REFRESH RATE!! ------------\n');
-        Priority(0);  %Reset priority 
-        KbQueueRelease(keys.kbDevice); 
-        ListenChar(0);
-        Screen('CloseAll'); % Close PTB screen  
-        error('CHECK REFRESH RATE');
-    end        
-else
-    if param.Hz == 0 % Couldn't compute a proper one, so use aimHz
-        param.Hz = param.aimHz;
-    end
+if exist('checkHz', 'var') && checkHz == 1 && param.Hz ~= param.aimHz
+    Priority(0);  %Reset priority 
+    KbQueueRelease(keys.kbDevice); 
+    ListenChar(0);
+    Screen('CloseAll'); % Close PTB screen  
+    error('CHECK REFRESH RATE');
 end
 
 
@@ -371,18 +389,21 @@ Screen('TextStyle', param.win, 1);
 
 %% Start runs/blocks
 for b = 1:size(data.block, 2)
-
+            
     if ~keys.STOP % if stop keys has not been pressed    
 
+        fprintf('\nStart of block %d \n', b);  
+        
         % Show message to signal start of run
-        message1 = 'Please wait.';
-        Screen('TextSize', param.win, 30);
+        message1 = 'Veuillez attendre.';
+        Screen('TextSize', param.win, param.textSize);
         DrawFormattedText(param.win, message1, 'center', 'center', param.colour.text);
-        vbl = Screen('Flip', param.win);                                        
-        data.allTimes(end+1,:) = {vbl, 'waitMessage'};
-
+        block_vbl = Screen('Flip', param.win);                                        
+        data.allTimes(end+1,:) = {block_vbl, sprintf('waitMessage_block%d', b)};
                     
         %% Wait for experimenter input to confirm start
+        
+        fprintf('Waiting for experimenter to press "s" to start. \n');
         
         % Start normal keyboard recording capacity - Can't use Queues before the
         % KbTriggerWait command! or need to use KbQueueRelease first
@@ -391,8 +412,8 @@ for b = 1:size(data.block, 2)
         KbQueueCreate(keys.kbDevice, keyList);
         ListenChar(-1); % Prevent spilling of keystrokes into console:
 
-        [keys.STOP, ~, expTrigger] = wait4Key(keys.EXPtrigger, keys.STOP, keys.kbDevice);
-        data.allTimes(end+1,:) = {expTrigger, 'EXPtrigger'};
+        [keys.STOP, ~, expTriggerTime] = wait4Key(keys.EXPtrigger, keys.STOP, keys.kbDevice);
+        data.allTimes(end+1,:) = {expTriggerTime, 'EXPtrigger'};
         
         
         if ~keys.STOP     
@@ -402,26 +423,21 @@ for b = 1:size(data.block, 2)
 
             %% Wait exclusively for fMRI triggers
 
-            if fMRI
-                % Tell participants to wait - or delete to stick to black screen
-    %             DrawFormattedText(param.win, 'Please wait.', 'center', 'center', param.colour.stim, [], [], [], 1.5);
-    %             Screen('Flip', param.win); % clear screen
-
+            if data.fMRI
+                
+                fprintf('Waiting for fMRI trigger (or the "t" key). \n')
+                
                 data.triggerTimes(b) = KbTriggerWait( keys.MRItrigger );
                 data.allTimes(end+1,:) = {data.triggerTimes(b), 'MRItrigger'};
 
-                % or, if that doesn't work, could do:
+                % or, if that doesn't work, could do (basically what the other function does):
             %     keyList                 = zeros(1,256);
             %     keyList(keys.MRItrigger) = 1; % only read MRI events
             %     KbQueueCreate(keys.kbDevice, keyList);
             %     data.runStartTimes(r) = KbQueueWait(keys.kbDevice);                
             end
 
-%             if b == 1 % just for an extra record of time
-%                 data.expStartTime = GetSecs();
-%             end
-
-            % Start normal keyboard recording capacity - Can't use Queues before the
+            % Re-Start normal keyboard recording capacity - Can't use Queues before the
             % KbTriggerWait command! or need to use KbQueueRelease first
             keyList                 = zeros(1,256);
             keyList(keysofinterest) = 1;
@@ -448,15 +464,17 @@ for b = 1:size(data.block, 2)
             flankFMRI_blockfun(b, getRatings);        
 
 
-            save([subjPath filesep data.name], 'data', 'param');                        
+            save([subjPath filesep data.name], 'data', 'param', 'keys');
+            fprintf('\n ****************** DATA SAVED!! ****************** \n') 
+
 
             if ~keys.STOP % if stop keys has not been pressed    
 
                 if b == nBlocks  % If last block
 
-                    message1 = 'Fin de l''experience \n\n\n Veuillez attendre l''experimentateur.';
+                    message1 = 'Fin de l''expérience \n\n\n Veuillez attendre l''expérimentateur.';
 
-                    Screen('TextSize', param.win, 30);
+                    Screen('TextSize', param.win, param.textSize);
                     DrawFormattedText(param.win, message1, 'center', 'center', param.colour.text);
                     Screen('DrawingFinished', param.win);
                     vbl = Screen('Flip', param.win);
@@ -489,7 +507,7 @@ end % for b=1:nBlocks
 
 
 % % % % End of Experiment
-save([subjPath filesep data.name], 'data', 'param');
+save([subjPath filesep data.name], 'data', 'param', 'keys');
 fprintf('\n ****************** DATA SAVED!! ****************** \n')
 
 
@@ -502,7 +520,7 @@ sca;            % Close PTB screen
 catch err
     
 if isfield(data, 'name')
-    save([subjPath filesep data.name], 'data', 'param');
+    save([subjPath filesep data.name], 'data', 'param', 'keys');
     fprintf('\n ****************** DATA SAVED!! ****************** \n')
 else
     fprintf('\n ****************** DATA NOT SAVED, as no data.name field!! ****************** \n')
@@ -519,7 +537,7 @@ rethrow(err);
 end
 
    
-path(oldpath);
+% path(oldpath);
 
 
 

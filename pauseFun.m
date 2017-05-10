@@ -9,6 +9,9 @@ if ~exist('kbDevice', 'var')
     kbDevice = [];
 end
 
+
+fprintf('Pause Mode: Waiting for Space or Enter key press to continue.\n')
+
 KbQueueStart(kbDevice);
 KbQueueFlush(kbDevice);
 while true
