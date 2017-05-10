@@ -158,7 +158,7 @@ param.effectDur         = .300;         % secs
 param.effect2scaleInt   = [2   4];      % secs
 param.ratingWindow      = 1.5;          % secs
 % more on rating scale
-param.waitRatWin        = 0;            % wait rest of window after response? logical, y or n
+param.waitRatWin        = 1;            % wait rest of window after response? logical, y or n
 param.noRatFeedback     = 1;            % logical, y or n
 param.noRatFeedbackDur  = 1;            % secs
 
@@ -399,7 +399,7 @@ for b = 1:size(data.block, 2)
         Screen('TextSize', param.win, param.textSize);
         DrawFormattedText(param.win, message1, 'center', 'center', param.colour.text);
         block_vbl = Screen('Flip', param.win);                                        
-        data.allTimes(end+1,:) = {block_vbl, sprintf('block%d_waitMessage', b)};
+        data.allTimes(end+1,:) = {block_vbl, sprintf('waitMessage_block%d', b)};
                     
         %% Wait for experimenter input to confirm start
         

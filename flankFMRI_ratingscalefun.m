@@ -36,7 +36,7 @@ scaleOn_vbl = Screen('Flip', param.win, effectOff_vbl + wait4Scale - param.slack
 data.allTimes(end+1,:) = {scaleOn_vbl, 'ratingScaleOn'};
 fprintf('Rating scale window. \n')
             
-[keys.STOP, ratingKey, ratingTime] = wait4Key(keys.rating, keys.STOP, keys.kbDevice, param.ratingWindow);
+[keys.STOP, ratingKey, ratingTime] = wait4Key(keys.rating, keys.STOP, keys.kbDevice, param.ratingWindow-param.rft); % correct ratingWindow by 1 refresh
 
 if ~keys.STOP &&...
         length(ratingKey)==1 && ratingKey > 0
@@ -63,7 +63,7 @@ if ismember(rating, 1:length(keys.rating))
     
     if param.waitRatWin
         fprintf('Waiting for rest of rating scale window. \n')
-        while GetSecs < scaleOn_vbl + param.ratingWindow - param.slack
+        while GetSecs < scaleOn_vbl + param.ratingWindow - param.rft
             Screen('FillRect', param.win, [param.colour.stim 1], param.stim.fixRect);
             Screen('Flip', param.win); % blank the screen 
         end
@@ -75,13 +75,14 @@ else % no rating
         
         message1 = 'Attention!';
         message2 = 'Vous n''avez pas répondu !';
-        Screen('TextSize', param.win, param.textSize);
+        Screen('TextSize', param.win, round(param.textSize*1.17));
         Screen('TextStyle', param.win, 1);
         DrawFormattedText(param.win, message1, 'center', param.xy0(2)-30, param.colour.stim);
-        Screen('TextSize', param.win, round(param.textSize*.8));
+        Screen('TextSize', param.win, round(param.textSize));
         Screen('TextStyle', param.win, 1);
         DrawFormattedText(param.win, message2, 'center', param.xy0(2)+30, param.colour.stim);
-
+        Screen('DrawingFinished', param.win);
+        
         noRatOn_vbl = Screen('Flip', param.win); % draw scale after random interval        
         scaleOff_vbl = noRatOn_vbl; % for trial-wise time record
         data.allTimes(end+1,:) = {noRatOn_vbl, 'noRatingFeedback'};

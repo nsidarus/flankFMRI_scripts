@@ -24,6 +24,7 @@ while true % repeated until no more trials are needed
     
     firstPressed = [];
     actKey  = NaN;
+    rt      = NaN;
     rt2     = NaN;
     
     % read from block array id of stimuli to find what buffer to call
@@ -53,7 +54,7 @@ while true % repeated until no more trials are needed
 % % Fixation Point
     Screen('FillRect', param.win, [param.colour.stim 1], param.stim.fixRect);
     start_vbl = Screen('Flip', param.win);
-    data.allTimes(end+1,:) = {start_vbl, sprintf('trial%d_startFixation', t)};
+    data.allTimes(end+1,:) = {start_vbl, sprintf('startFixation_trial%d', t)};
 
 % % % Draw Stim
     Screen('DrawTexture', param.win, param.stim.( param.figStimRefs{thisNoise}{thisTarget, thisFlanker} ), [], param.stim.figRect);                        
@@ -202,9 +203,10 @@ while true % repeated until no more trials are needed
         WaitSecs(wait4Scale);
         
         if ~exist('thisAction', 'var')
-            thisAction = NaN;
-            rt = NaN;
-            respTime = NaN;
+            thisAction  = NaN;
+            rt          = NaN;
+            rt2         = NaN;
+            respTime    = NaN;
         end              
         
         rating      = NaN;
@@ -285,7 +287,7 @@ while true % repeated until no more trials are needed
         return
     end % if ~keys.STOP
     
-    clear thisNoise  thisFlank thisTarget thisCong  thisAOI  thisTrialType thisEffect
+    clear thisAction thisNoise thisFlank thisTarget thisCong  thisAOI  thisTrialType thisEffect
 end % while true % repeated until no more trials are needed
 
 else % if ~keys.STOP
