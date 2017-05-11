@@ -179,11 +179,13 @@ if data.fMRI % different response keys/codes
     keys.action         = KbName({'e', 'b'}); % Left and Right Action Keys
     keys.rating         = KbName({'d', 'n', 'z', 'e', 'b', 'y', 'g', 'r'}); % All response keys, from both left & right resp. boxes
 else
-    keys.action         = KbName({'F','J'});
+%     keys.action         = KbName({'F','J'});
+    keys.action         = KbName({'4$','5%'}); % From Subj 2 onwards, to avoid moving hands
     keys.rating         = KbName({'1!','2@','3#','4$','5%','6^','7&','8*'});
 end
 
-keysofinterest          = [keys.MRItrigger, keys.EXPtrigger, keys.action, keys.rating, keys.enter, keys.pause, keys.escape]; % only keys that will be read and recorded by KbQueueCheck
+% do not include MRI trigger in keys to read!
+keysofinterest          = [keys.EXPtrigger, keys.action, keys.rating, keys.enter, keys.pause, keys.escape]; % only keys that will be read and recorded by KbQueueCheck
 keys.STOP               = 0;            % To Stop running scripts, logical
   
 
