@@ -113,7 +113,7 @@ else
 end
 
 data.date  = datestr(now,'yyyymmdd-HHMM');
-data.name  = sprintf('flankFMRI_S%02d_%s_%s.mat', data.subj, data.stage, data.date);
+data.name  = sprintf('flankFMRI_200ms_S%02d_%s_%s.mat', data.subj, data.stage, data.date);
 
 subjPath   = [savePath filesep sprintf('S%02d', data.subj)];
 if ~exist(subjPath, 'dir')
@@ -150,7 +150,7 @@ param.figScale          = param.viewDistance/100; % fig size set for 1m viewDist
 
 % Timing, all in seconds!
 % param.stimDur           = .050;         % Duration of target % secs
-param.stimDur           = .100;         % Increased duration from S07
+param.stimDur           = .200;         % Increased duration from S07
 param.aimHz             = 60;           % Hz
 param.fixationDur       = [2   4];      % secs
 param.responseWindow    = 1.2;          % secs
