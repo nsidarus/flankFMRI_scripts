@@ -14,9 +14,9 @@ KbQueueCreate(keys.kbDevice, keyList);
 
 
 % Show message to signal start of run
-message1 = 'Maintenant, nous allons vérifier si toutes les touches fonctionne correctement.';
+message1 = 'Avant de commencer, nous allons vérifier\nsi toutes les touches fonctionne correctement.';
 Screen('TextSize', param.win, param.textSize);
-DrawFormattedText(param.win, message1, 'center', 'center', param.colour.text, 80,[],[], 1.5);
+DrawFormattedText(param.win, message1, 'center', 'center', param.colour.text, 60,[],[], 1.5);
 Screen('Flip', param.win);                                        
 
         
@@ -27,7 +27,7 @@ fprintf('\nWaiting for experimenter to press "s" to start. \n');
 
 if ~keys.STOP
     % Show message to signal start of run
-    message1 = 'Veuillez appuyer, séquentiellement, sur les touches de 1 à 8.';
+    message1 = 'Veuillez appuyer, séquentiellement,\nsur les touches de 1 à 8.';
     message3 = '     1      2      3      4      5      6      7      8    ';
     Screen('TextSize', param.win, round(param.textSize*1.17));
     Screen('TextStyle', param.win, 1);
@@ -40,7 +40,7 @@ if ~keys.STOP
     Screen('Flip', param.win);                                        
 
 
-    fprintf('Waiting to check key presses. Press "s" to stop and start experiment, or r to instruct a repeat.\n\n');
+    fprintf('Waiting to check key presses. Press "s" to stop and start experiment, or "r" to instruct a repeat.\n\n');
 
 
     while true
