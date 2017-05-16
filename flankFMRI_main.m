@@ -70,7 +70,7 @@ end
 
 
 % % % % % % % % % To run on test mode
-scriptTest = 2; % scriptTest=0: exp  %% scriptTest=1: In fMRI  %% scriptTest=2: Not in fMRI 
+scriptTest = 0; % scriptTest=0: exp  %% scriptTest=1: In fMRI  %% scriptTest=2: Not in fMRI 
 testStage = 'train2'; % if scriptTest, then choose stage: train, train2, exp
 
 getRatings = 1; % Get Online Ratings for all subjects
