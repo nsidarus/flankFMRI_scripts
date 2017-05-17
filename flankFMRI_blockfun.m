@@ -46,8 +46,9 @@ while true % repeated until no more trials are needed
         
 %% % % % % Start Trial
     
-    fprintf('\nBlock %d, Trial %d \n', b, t);
-
+    fprintf('\nBlock %d, Trial %d, Condition %d \n', b, t, data.block{b}(trialIndex(t), colno.cond));
+%     fprintf('Condition %d \n',data.block{b}(trialIndex(t), colno.cond));
+    
     % Jittered fixation Duration/ITI
     fixDur = param.fixationDur(1) + (param.fixationDur(2)-param.fixationDur(1))*rand(1);
 
