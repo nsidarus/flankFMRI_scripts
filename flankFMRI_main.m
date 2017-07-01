@@ -69,9 +69,10 @@ if ~exist(savePath, 'dir')
 end
 
 
+
 % % % % % % % % % To run on test mode
-scriptTest = 0; % scriptTest=0: exp  %% scriptTest=1: In fMRI  %% scriptTest=2: Not in fMRI 
-testStage = 'train2'; % if scriptTest, then choose stage: train, train2, exp
+scriptTest = 0; % scriptTest=0: exp  %% scriptTest=1: In fMRI  %% scriptTest=2: Not in fMRI %% scriptTest=3: Not in fMRI, but use dialog to change starting blocks5465
+testStage = 'exp'; % if scriptTest, then choose stage: train, train2, exp
 
 getRatings = 1; % Get Online Ratings for all subjects
 
@@ -84,12 +85,13 @@ global param keys colno data
 
 % Get Subj & Experiment info
 if ~scriptTest
+%     argindlg = inputdlg({'Participant number (two-digit)',...
+%                          'Stage: train, train2, exp)',...
+%                          'fMRI: y or n'});
     argindlg = inputdlg({'Participant number (two-digit)',...
-                         'Stage: train, train2, exp)',...
-                         'fMRI: y or n'});
-    % argindlg = inputdlg({'Participant number (two-digit)',...
-    %                      'Stage (train, train2, exp)',...
-    %                      'fMRI (y or n)'}, '', 1, {'','',''}, 'on');
+                         'Stage (train, train2, exp)',...
+                         'fMRI (y or n)', 'restart? from?' }, '', 1,...
+                          {'','','', '0'}, 'on');
     if isempty(argindlg)
         error('Experiment Cancelled!');
     end
@@ -101,15 +103,35 @@ if ~scriptTest
     else
         data.fMRI = 0;
     end
+    data.restart = str2double(argindlg{4});
 
-else
+elseif scriptTest == 3
+        argindlg = inputdlg({'Participant number (two-digit)',...
+                         'Stage (train, train2, exp)',...
+                         'fMRI (y or n)', 'restart? from?' }, '', 1,...
+                          {'','','', '0'}, 'on');
+    if isempty(argindlg)
+        error('Experiment Cancelled!');
+    end
+
+    data.subj  = str2double(argindlg{1});
+    data.stage = argindlg{2};
+    if argindlg{3} == 'y'
+        data.fMRI = 1;
+    else
+        data.fMRI = 0;
+    end
+    data.restart = str2double(argindlg{4});
+    
+else   
     data.subj  = 99; 
     data.stage = testStage;
     if scriptTest == 1
         data.fMRI = 1;
     else
         data.fMRI = 0;
-    end    
+    end
+    data.restart = 0;
 end
 
 data.date  = datestr(now,'yyyymmdd-HHMM');
@@ -222,26 +244,54 @@ nCond       = 3; % Congruent vs. Incongruent vs. Masked
 nAction     = 2; % left vs right
 nAOI        = length(param.aoiDur);
 
-% set seed of random number generator to subj. no.
-data.rng = rng('shuffle'); % save/set random number generator
-% rng(str2num(data.subj)*data.time*10); %#ok<ST2NM> for Matlab 2012 version
 
 switch data.stage
     case {'train', 'train2'}
         nBlocks = 1;
         param.colour.effects = effectsTrain./255; % for 0-1 colour mapping            
-        
+
     case 'exp'
         nBlocks = 6;
         param.colour.effects = effectsExp./255; % for 0-1 colour mapping
-        
+
     otherwise
         error('No identifiable stage.');
 end
 clear effectsExp effectsTrain
 
-% Set up block matrices
-[blocks, randColours] = flankFMRI_Rand_TrialColourBlock(nBlocks, nColours, nEffects, nRepeat, nCond, nAction, nAOI);
+
+
+
+if ~data.restart 
+
+    % set seed of random number generator to subj. no.
+    data.rng = rng('shuffle'); % save/set random number generator
+    % rng(str2num(data.subj)*data.time*10); %#ok<ST2NM> for Matlab 2012 version
+
+    % Set up block matrices
+    [blocks, randColours] = flankFMRI_Rand_TrialColourBlock(nBlocks, nColours, nEffects, nRepeat, nCond, nAction, nAOI);
+
+
+    if strcmp(data.stage, 'exp')
+        cfg.rng = data.rng;
+        cfg.blocks = blocks;
+        cfg.randColours = randColours;       
+        save([subjPath filesep sprintf('S%02d_expCfg', data.subj)], 'cfg');
+    end
+    
+    
+    runBlocks = 1:nBlocks;
+    
+else % recover cfg info to restart from a given block
+    load([subjPath filesep sprintf('S%02d_expCfg', data.subj)], 'cfg');
+    
+    data.rng = cfg.rng;
+    blocks = cfg.blocks;
+    randColours = cfg.randColours;
+       
+    runBlocks = data.restart:nBlocks;
+end
+
 
 
 % For shorter training in scanner - limit to 10 trials
@@ -252,24 +302,24 @@ end
 
 
 % if testing script, shorten blocks
-if scriptTest > 0 && ~strcmp(data.stage, 'train2')
-    if nBlocks > 1
+if ismember(scriptTest, 1:2) && ~strcmp(data.stage, 'train2')
+    if nBlocks > 1 && ~data.restart
         blocks = blocks(1:3);
         nBlocks = size(blocks, 2); % Correct nBlocks
-        for i = 1:nBlocks
-            blocks{i} = blocks{i}(1:6,:);
-        end
-    end    
+    end
+    for i = 1:nBlocks
+        blocks{i} = blocks{i}(1:6,:);
+    end
 end
-
-
+    
 % Initialise data variables
 data.block      = blocks;
-data.colourMaps = randColours; % 1 col per block
+data.colourMaps = randColours; % 1 col per block       
 data.raw        = cell(1, nBlocks);
 data.trialTimes = cell(1, nBlocks);
 data.allTimes   = {'time', 'label'};
 data.triggerTimes = nan(1, nBlocks); % MRI trigger times at the start of each block
+
 
 % for record
 data.rawHdr     = {'subj', 'blockN', 'trialN', 'cond', 'noise', 'flank', 'target', 'cong', 'aei', 'trialtype', 'effect',...
@@ -291,6 +341,8 @@ colno.aoi       = 6;
 colno.trialType = 7;
 colno.effect    = 8;
     
+
+
 
 
 %% Startup Psychtoolbox
@@ -318,9 +370,9 @@ else
 
     Screen('Preference', 'SkipSyncTests', 1);
        
-%     screenNumber=0;  % can specify number, otherwise, default
+    screenNumber=0;  % can specify number, otherwise, default
 %     screenNumber=max(Screen('Screens'));
-    screenNumber=1;
+%     screenNumber=1;
     %     [param.win, param.wrect] = Screen('OpenWindow', screenNumber, param.colour.bkgd);
     [param.win, param.wrect] = PsychImaging('OpenWindow', screenNumber, param.colour.bkgd);
     HideCursor;
@@ -398,7 +450,7 @@ end
 
 
 %% Start runs/blocks
-for b = 1:size(data.block, 2)
+for b = runBlocks
             
     if ~keys.STOP % if stop keys has not been pressed    
 
